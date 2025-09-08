@@ -63,12 +63,34 @@ resp = call_openai([
     {"role": "system", "content": SYSTEM_PROMPT},
     {"role": "user", "content": USER_PROMPT}
 ])
+
+import re
+
 reply = resp["choices"][0]["message"]["content"]
 
+def extract_json(text: str) -> str:
+    # 1) 先試從 ```json ... ``` 取出內容
+    m = re.search(r"```(?:json)?\s*(\{.*\})\s*```", text, flags=re.DOTALL)
+    if m:
+        return m.group(1).strip()
+    # 2) 否則取第一個 { 到最後一個 } 之間（容錯）
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        return text[start:end+1]
+    return text.strip()
+
+clean = extract_json(reply)
+
 try:
-    plan = json.loads(reply)
+    plan = json.loads(clean)
 except Exception as e:
-    raise SystemExit(f"LLM did not return valid JSON. Raw:\n{reply}") from e
+    raise SystemExit(
+        "LLM did not return valid JSON after cleanup.\n"
+        f"Raw reply (truncated):\n{reply[:1200]}"
+    ) from e
+
+
 
 branch = plan["branch"]
 commit_message = plan.get("commit_message", "feat: initial app")
