@@ -1,0 +1,27 @@
+name: issue-to-pr
+on:
+  issues:
+    types: [opened, edited, reopened]
+  workflow_dispatch:
+
+jobs:
+  plan-and-pr:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install gh (GitHub CLI)
+        run: brew install gh
+
+      - name: Run planner (generate Xcode project + PR)
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          python3 .github/scripts/issue_to_pr.py
