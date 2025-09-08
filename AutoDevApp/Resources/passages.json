@@ -1,0 +1,32 @@
+[
+    {
+        "title": "Rainforest Animals",
+        "passage": "A rainforest is a wet, warm place where many different plants and animals live. It is home to thousands of species, some of which are not found anywhere else in the world. Rainforests are vital to our planet's health.",
+        "questions": [
+            {
+                "id": "q1",
+                "text": "What is the main idea of the passage?",
+                "choices": ["About deserts", "About rainforests", "About oceans", "About mountains"],
+                "answerIndex": 1
+            },
+            {
+                "id": "q2",
+                "text": "Why are rainforests important?",
+                "choices": ["They provide food", "They are cold", "They have no animals", "They are not important"],
+                "answerIndex": 0
+            }
+        ]
+    },
+    {
+        "title": "Ocean Life",
+        "passage": "The ocean is a vast body of salt water that covers more than 70% of the Earth's surface. It is home to countless species of fish, mammals, and other organisms. The ocean plays a crucial role in regulating the Earth's climate.",
+        "questions": [
+            {
+                "id": "q1",
+                "text": "What does the ocean cover?",
+                "choices": ["70% of the Earth", "50% of the Earth", "30% of the Earth", "10% of the Earth"],
+                "answerIndex": 0
+            }
+        ]
+    }
+]
