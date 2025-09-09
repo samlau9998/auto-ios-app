@@ -1,0 +1,40 @@
+name: AutoDevApp
+
+options:
+  deploymentTarget:
+    iOS: "16.0"
+
+settings:
+  base:
+    PRODUCT_BUNDLE_IDENTIFIER: com.samlau9998.AutoDevApp
+    SWIFT_VERSION: 5.0
+
+targets:
+  AutoDevApp:
+    type: application
+    platform: iOS
+    sources:
+      - AutoDevApp
+    resources:
+      - AutoDevApp/Resources
+    settings:
+      base:
+        INFOPLIST_FILE: AutoDevApp/App/Info.plist
+
+  AutoDevAppTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - AutoDevAppTests
+    dependencies:
+      - target: AutoDevApp
+
+schemes:
+  AutoDevApp:
+    build:
+      targets:
+        AutoDevApp: all
+        AutoDevAppTests: test
+    test:
+      targets:
+        - name: AutoDevAppTests
