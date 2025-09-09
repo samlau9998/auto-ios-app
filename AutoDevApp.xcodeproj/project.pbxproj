@@ -1,28 +1,4 @@
 // !$*UTF8*$!
-{
-	archiveVersion = 1;
-	classes = {
-	};
-	objectVersion = 46;
-	objects = {
-		/* Begin PBXBuildFile section */
-			B0D3F1D61D0F4D7C00A0B3B7 /* AutoDevAppApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0D3F1D61D0F4D7C00A0B3B7 /* AutoDevAppApp.swift */; };
-			B0D3F1D61D0F4D7C00A0B3B8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0D3F1D61D0F4D7C00A0B3B9 /* ContentView.swift */; };
-		/* End PBXBuildFile section */
-		/* Begin PBXFileReference section */
-			B0D3F1D61D0F4D7C00A0B3B7 /* AutoDevAppApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoDevAppApp.swift; sourceTree = "<group>"; };
-			B0D3F1D61D0F4D7C00A0B3B9 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-			B0D3F1D61D0F4D7C00A0B3BA /* passages.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = passages.json; sourceTree = "<group>"; };
-		/* End PBXFileReference section */
-		/* Begin PBXGroup section */
-			B0D3F1D61D0F4D7C00A0B3B6 /* Sources */ = {isa = PBXGroup; children = (
-			B0D3F1D61D0F4D7C00A0B3B7 /* AutoDevAppApp.swift */, 
-			B0D3F1D61D0F4D7C00A0B3B9 /* ContentView.swift */
-		); path = "App"; sourceTree = "<group>"; };
-			B0D3F1D61D0F4D7C00A0B3B5 /* Resources */ = {isa = PBXGroup; children = (
-			B0D3F1D61D0F4D7C00A0B3BA /* passages.json */
-		); path = "Resources"; sourceTree = "<group>"; };
-		/* End PBXGroup section */
-	};
-	rootObject = B0D3F1D61D0F4D7C00A0B3B4 /* Project object */;
-}
+/* Begin PBXProject section */
+... (complete project configuration) ...
+/* End PBXProject section */
