@@ -1,0 +1,7 @@
+xcodebuild -scheme AutoDevApp -destination platform=iOS Simulator,id=0E573B10-C4F3-40D6-A8CB-08B18F25CE08 -enableCodeCoverage YES test
+Command line invocation:
+    /Applications/Xcode_16.4.app/Contents/Developer/usr/bin/xcodebuild -scheme AutoDevApp -destination platform=iOS Simulator,id=0E573B10-C4F3-40D6-A8CB-08B18F25CE08 -enableCodeCoverage YES test
+
+Build settings from command line:
+    Simulator,id = 0E573B10-C4F3-40D6-A8CB-08B18F25CE08
+
