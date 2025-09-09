@@ -1,10 +1,7 @@
 name: ci-auto-fix
 
 on:
-  # 開 / 更新 / 重新打開 PR 時觸發（推介）
   pull_request:
-    types: [opened, synchronize, reopened]
-  # 可手動在 Actions 介面觸發
   workflow_dispatch:
 
 jobs:
@@ -18,68 +15,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # （可按需改成你機器上的版本路徑，例如 /Applications/Xcode_16.4.app）
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app
 
-      # ---- 改動 1：自動揀 + boot 可用 iPhone 模擬器（以 UDID）----
+      # 以 project.yml 生成 .xcodeproj，避免手寫 pbxproj 壞檔
+      - name: Install XcodeGen & generate project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      # 揀一個可用嘅 iPhone 模擬器，並確保開機
       - name: Pick & boot an available iPhone simulator
+        id: pick-sim
         shell: bash
         run: |
-          set -e
-          echo "Listing available simulators:"
-          xcrun simctl list devices available
+          set -euo pipefail
 
-          # 取第一部可用 iPhone 的 UDID
-          UDID=$(xcrun simctl list devices available | \
-            awk -F '[()]' '/iPhone/ && /Booted|Shutdown/ {print $2; exit}')
-
-          if [ -z "$UDID" ]; then
-            echo "❌ Cannot find any available iPhone simulator."
+          # 揀第一個可用嘅 iPhone（Booted/Shutdown 任一）
+          udid=$(xcrun simctl list devices available | awk -F '[()]' '/iPhone .* (Shutdown|Booted)/{print $2; exit}')
+          if [ -z "${udid:-}" ]; then
+            echo "No available iPhone simulator found" >&2
             exit 1
           fi
 
-          echo "Using simulator UDID: $UDID"
-          # 嘗試 boot（如果已 boot 會直接成功）
-          xcrun simctl boot "$UDID" || true
-
-          # Export 到後續 steps
-          echo "SIMULATOR_UDID=$UDID" >> $GITHUB_ENV
-
-      # ---- 改動 2：以 UDID 覆蓋目的地，跑測試；失敗則自動最少變更修復 ----
-      - name: "Auto loop: build/test -> fix -> retest (max 3 rounds)"
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        shell: bash
-        run: |
-          set -e
-          rounds=0
-          max=3
-          pass=1
-
-          while [ $rounds -lt $max ]; do
-            echo "=== Round $((rounds+1))/$max: make test ==="
-            set +e
-            # 用 UDID 覆蓋 Makefile 裏面的 DEST
-            make test DEST="platform=iOS Simulator,id=$SIMULATOR_UDID" | tee test_output.txt
-            code=$?
-            set -e
-
-            if [ $code -eq 0 ]; then
-              echo "✅ Tests passed."
-              pass=0
-              break
-            fi
-
-            echo "❌ Tests failed. Ask LLM to produce minimal fixes..."
-            python3 .github/scripts/fix_tests.py
-
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add -A
-            git commit -m "chore: auto-fix from LLM (round $((rounds+1)))" || true
-            git push || true
-
-            rounds=$((rounds+1))
-          done
-
-          exit $pass
+          # 如未開機就 boot，並等到 boot 完成
+          if ! xcrun simctl bootstatus "$udid" >/dev/null 2>&1; then
+            xcrun simctl boot "$udid" || true
+            for i in {1..60}; do
+              if xcrun simctl bootstatus "$udid" >/dev/null 2>&1; then break; fi
+              sleep 2
