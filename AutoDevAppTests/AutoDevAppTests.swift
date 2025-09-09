@@ -1,1 +1,1 @@
-func testExample() { XCTAssert(true) }
+func testExample() { XCTAssertTrue(true) }
