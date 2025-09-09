@@ -7,7 +7,6 @@ on:
 jobs:
   test-and-fix:
     runs-on: macos-latest
-
     permissions:
       contents: write
       pull-requests: write
@@ -15,25 +14,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 1) 揀用的 Xcode 版本（如 runner 有 Xcode_16.4 更穩定）
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode.app
-        # 若你的 runner 有 16.4：/Applications/Xcode_16.4.app
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app
+          xcodebuild -version
+          xcrun --version
 
-      # 2) 用 XcodeGen 由 project.yml 產生 .xcodeproj（避免手寫 pbxproj 壞檔）
       - name: Install XcodeGen & generate project
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+          HOMEBREW_NO_INSTALL_CLEANUP: 1
         run: |
           brew install xcodegen
+          xcodegen --version
           xcodegen generate
 
-      # 3) 找/建 + 開機 一部可用的 iPhone 模擬器，並把 UDID 輸出成環境變數
       - name: Pick & boot an available iPhone simulator
         id: sim
         shell: bash
         run: |
           set -euo pipefail
 
-          # 先嘗試找現成可用的 simulator
           UDID="$(xcrun simctl list devices available --json | /usr/bin/python3 - <<'PY'
 import sys, json
 d=json.load(sys.stdin)
@@ -44,7 +45,6 @@ PY
           if [[ -z "${UDID}" ]]; then
             echo "No available simulator. Creating one…"
 
-            # 找到當前 Xcode 的最新 iOS runtime
             RUNTIME="$(xcrun simctl list runtimes --json | /usr/bin/python3 - <<'PY'
 import sys, json
 rts=json.load(sys.stdin).get("runtimes",[])
@@ -55,26 +55,30 @@ PY
 )"
             if [[ -z "${RUNTIME}" ]]; then
               echo "❌ No available iOS runtime in the selected Xcode."
+              xcrun simctl list runtimes
               exit 1
             fi
 
-            # 選一個常見 iPhone device type
             DEVICETYPE="$(xcrun simctl list devicetypes | grep -E "iPhone (15|14|13|SE)" | head -n1 | sed -E 's/.*\((.*)\).*/\1/')"
             if [[ -z "${DEVICETYPE}" ]]; then
               DEVICETYPE="$(xcrun simctl list devicetypes | grep -E "iPhone" | head -n1 | sed -E 's/.*\((.*)\).*/\1/')"
             fi
 
-            # 建立裝置
+            if [[ -z "${DEVICETYPE}" ]]; then
+              echo "❌ No iPhone device type found:"
+              xcrun simctl list devicetypes
+              exit 1
+            fi
+
             UDID="$(xcrun simctl create "CI-iPhone" "${DEVICETYPE}" "${RUNTIME}")"
           fi
 
-          # 開機 + 等待 boot 完成
           xcrun simctl boot "${UDID}" || true
           xcrun simctl bootstatus "${UDID}" -b
-
           echo "SIMULATOR_UDID=${UDID}" | tee -a "$GITHUB_ENV"
+          echo "✅ Using simulator: ${UDID}"
+          xcrun simctl list devices | sed -n '1,80p'
 
-      # 4) 自動化：build/test → 失敗就最小修補 → 重測（最多 3 回合）
       - name: Auto loop: build/test -> fix -> retest (max 3 rounds)
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -84,10 +88,8 @@ PY
           rounds=0
           max=3
           pass=1
-
           while [ $rounds -lt $max ]; do
             echo "=== Round $((rounds+1))/$max: make test ==="
-            # 用 SIMULATOR_UDID 給 Makefile 的 DEST（已在 Makefile 支援）
             make test DEST="platform=iOS Simulator,id=${SIMULATOR_UDID}" | tee test_output.txt
             code=$?
             set -e
@@ -108,5 +110,4 @@ PY
 
             rounds=$((rounds+1))
           done
-
           exit $pass
